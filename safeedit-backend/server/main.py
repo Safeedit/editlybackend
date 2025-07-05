@@ -146,14 +146,15 @@ def convert():
                 gs_cmd,
                 "-sDEVICE=pdfwrite",
                 "-dCompatibilityLevel=1.4",
-                f"-dPDFSETTINGS={quality}",  # ✅ Dynamic quality
+                "-dPDFSETTINGS=/screen",
+                "-dDownsampleColorImages=true",
+                "-dColorImageResolution=72",  # Lower image resolution
                 "-dNOPAUSE",
                 "-dQUIET",
                 "-dBATCH",
                 f"-sOutputFile={output_path}",
-                input_path
+                input_path,
             ]
-            try:
                 subprocess.run(command, check=True)
                 return send_file(output_path, as_attachment=True)
             except Exception as e:
@@ -163,15 +164,22 @@ def convert():
         # ✅ OCR PDF ➡ Text
         elif action == "ocr-pdf":
             output_path = os.path.join(OUTPUT_FOLDER, filename.replace(".pdf", ".txt"))
-            pages = convert_from_path(input_path)
+        
+            from PyPDF2 import PdfReader
+            reader = PdfReader(input_path)
+            total_pages = len(reader.pages)
+        
             full_text = ""
-            for page in pages:
-                text = pytesseract.image_to_string(page)
-                full_text += text + "\n\n"
+            for i in range(total_pages):
+                pages = convert_from_path(input_path, first_page=i+1, last_page=i+1, dpi=200)
+                for page in pages:
+                    text = pytesseract.image_to_string(page)
+                    full_text += text + "\n\n"
+        
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(full_text)
         
-            return send_file(output_path, as_attachment=True)  # ✅ Send .txt file as download
+            return send_file(output_path, as_attachment=True)
 
 
         # ✅ Split PDF ➡ ZIP
