@@ -18,13 +18,19 @@ import pytesseract
 if platform.system() == "Windows":
     import pythoncom
 
+# ✅ Folder setup
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
+OUTPUT_FOLDER = os.path.join(BASE_DIR, "outputs")
+MERGE_FOLDER = os.path.join(UPLOAD_FOLDER, "merge")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+os.makedirs(MERGE_FOLDER, exist_ok=True)
+
 app = Flask(__name__)
 CORS(app)
 
-UPLOAD_FOLDER = 'uploads'
-OUTPUT_FOLDER = 'outputs'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
 
 # 🧠 Safe DOCX ➡ PDF (Windows only)
 def convert_docx_thread_safe(input_path, output_path):
