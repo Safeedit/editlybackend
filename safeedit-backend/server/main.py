@@ -8,7 +8,9 @@ from pdf2docx import Converter as PDF2DOCX
 from docx2pdf import convert as DOCX2PDF
 from PyPDF2 import PdfMerger, PdfReader, PdfWriter
 from PIL import Image
-import pythoncom
+import platform
+if platform.system() == "Windows":
+    import pythoncom
 from pdf2image import convert_from_path
 import pytesseract
 import fitz  
@@ -27,17 +29,23 @@ os.makedirs(MERGE_FOLDER, exist_ok=True)
 
 # 🧠 Thread-safe DOCX to PDF
 def convert_docx_thread_safe(input_path, output_path):
-    for attempt in range(3):
-        pythoncom.CoInitialize()
-        try:
-            DOCX2PDF(input_path, output_path)
-            return
-        except Exception as e:
-            print(f"⚠️ Attempt {attempt+1} failed: {e}")
-            time.sleep(1)
-        finally:
-            pythoncom.CoUninitialize()
-    raise Exception("❌ DOCX to PDF conversion failed after 3 attempts.")
+    import platform
+    if platform.system() == "Windows":
+        import pythoncom
+        for attempt in range(3):
+            pythoncom.CoInitialize()
+            try:
+                DOCX2PDF(input_path, output_path)
+                return
+            except Exception as e:
+                print(f"⚠️ Attempt {attempt+1} failed: {e}")
+                time.sleep(1)
+            finally:
+                pythoncom.CoUninitialize()
+        raise Exception("❌ DOCX to PDF conversion failed after 3 attempts.")
+    else:
+        raise NotImplementedError("DOCX to PDF conversion is only supported on Windows.")
+
 
 @app.route('/')
 def home():
