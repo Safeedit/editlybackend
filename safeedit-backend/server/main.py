@@ -137,13 +137,16 @@ def convert():
 
         # ✅ Compress PDF
         elif action == "compress-pdf":
+            # Get compression quality from form (default to /screen)
+            quality = request.form.get("quality", "/screen")
+        
             output_path = os.path.join(OUTPUT_FOLDER, filename.replace(".pdf", "_compressed.pdf"))
             gs_cmd = "gswin64c" if platform.system() == "Windows" else "gs"
             command = [
                 gs_cmd,
                 "-sDEVICE=pdfwrite",
                 "-dCompatibilityLevel=1.4",
-                "-dPDFSETTINGS=/screen",
+                f"-dPDFSETTINGS={quality}",  # ✅ Dynamic quality
                 "-dNOPAUSE",
                 "-dQUIET",
                 "-dBATCH",
@@ -152,8 +155,10 @@ def convert():
             ]
             try:
                 subprocess.run(command, check=True)
+                return send_file(output_path, as_attachment=True)
             except Exception as e:
                 return f"❌ Ghostscript compression failed: {str(e)}", 500
+
 
         # ✅ OCR PDF ➡ Text
         elif action == "ocr-pdf":
@@ -165,6 +170,9 @@ def convert():
                 full_text += text + "\n\n"
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(full_text)
+        
+            return send_file(output_path, as_attachment=True)  # ✅ Send .txt file as download
+
 
         # ✅ Split PDF ➡ ZIP
         elif action == "split-pdf":
