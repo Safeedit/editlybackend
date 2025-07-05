@@ -135,54 +135,6 @@ def convert():
             output_path = os.path.join(OUTPUT_FOLDER, filename.replace(".docx", ".pdf"))
             convert_docx_thread_safe(input_path, output_path)
 
-        # ✅ Compress PDF
-        elif action == "compress-pdf":
-            # Get compression quality from form (default to /screen)
-            quality = request.form.get("quality", "/screen")
-        
-            output_path = os.path.join(OUTPUT_FOLDER, filename.replace(".pdf", "_compressed.pdf"))
-            gs_cmd = "gswin64c" if platform.system() == "Windows" else "gs"
-            command = [
-                gs_cmd,
-                "-sDEVICE=pdfwrite",
-                "-dCompatibilityLevel=1.4",
-                f"-dPDFSETTINGS={quality}",  # use selected quality from frontend
-                "-dDownsampleColorImages=true",
-                "-dColorImageResolution=72",  # Lower image resolution
-                "-dNOPAUSE",
-                "-dQUIET",
-                "-dBATCH",
-                f"-sOutputFile={output_path}",
-                input_path,
-            ]
-            try:
-                subprocess.run(command, check=True)
-                return send_file(output_path, as_attachment=True)
-            except Exception as e:
-                return f"❌ Ghostscript compression failed: {str(e)}", 500
-        
-
-
-        # ✅ OCR PDF ➡ Text
-        elif action == "ocr-pdf":
-            output_path = os.path.join(OUTPUT_FOLDER, filename.replace(".pdf", ".txt"))
-        
-            from PyPDF2 import PdfReader
-            reader = PdfReader(input_path)
-            total_pages = len(reader.pages)
-        
-            full_text = ""
-            for i in range(total_pages):
-                pages = convert_from_path(input_path, first_page=i+1, last_page=i+1, dpi=200)
-                for page in pages:
-                    text = pytesseract.image_to_string(page)
-                    full_text += text + "\n\n"
-        
-            with open(output_path, "w", encoding="utf-8") as f:
-                f.write(full_text)
-        
-            return send_file(output_path, as_attachment=True)
-
 
         # ✅ Split PDF ➡ ZIP
         elif action == "split-pdf":
