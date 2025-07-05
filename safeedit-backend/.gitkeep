@@ -1,0 +1,5 @@
+touch outputs/.gitkeep
+touch uploads/.gitkeep
+git add outputs/.gitkeep uploads/.gitkeep
+git commit -m "Keep output and upload folders"
+git push
