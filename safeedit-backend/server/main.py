@@ -34,20 +34,41 @@ CORS(app)
 
 # 🧠 Safe DOCX ➡ PDF (Windows only)
 def convert_docx_thread_safe(input_path, output_path):
-    if platform.system() != "Windows":
-        raise NotImplementedError("DOCX to PDF is only supported on Windows.")
+    system = platform.system()
 
-    for attempt in range(3):
-        pythoncom.CoInitialize()
+    if system == "Windows":
+        import pythoncom
+        from docx2pdf import convert as DOCX2PDF
+
+        for attempt in range(3):
+            pythoncom.CoInitialize()
+            try:
+                DOCX2PDF(input_path, output_path)
+                return
+            except Exception as e:
+                print(f"⚠️ Attempt {attempt+1} failed: {e}")
+                time.sleep(1)
+            finally:
+                pythoncom.CoUninitialize()
+
+        raise Exception("❌ DOCX to PDF conversion failed after 3 attempts.")
+
+    elif system == "Linux":
+        # Use LibreOffice CLI for conversion
         try:
-            DOCX2PDF(input_path, output_path)
-            return
-        except Exception as e:
-            print(f"⚠️ Attempt {attempt+1} failed: {e}")
-            time.sleep(1)
-        finally:
-            pythoncom.CoUninitialize()
-    raise Exception("❌ DOCX to PDF conversion failed after 3 attempts.")
+            result = subprocess.run(
+                ["libreoffice", "--headless", "--convert-to", "pdf", "--outdir", os.path.dirname(output_path), input_path],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            print(result.stdout.decode())
+        except subprocess.CalledProcessError as e:
+            print("❌ LibreOffice failed:", e.stderr.decode())
+            raise Exception(f"❌ LibreOffice conversion failed: {e.stderr.decode()}")
+    else:
+        raise NotImplementedError(f"DOCX to PDF is not supported on this OS: {system}")
+        
 
 @app.route('/')
 def home():
