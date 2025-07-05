@@ -146,7 +146,7 @@ def convert():
                 gs_cmd,
                 "-sDEVICE=pdfwrite",
                 "-dCompatibilityLevel=1.4",
-                "-dPDFSETTINGS=/screen",
+                f"-dPDFSETTINGS={quality}",  # use selected quality from frontend
                 "-dDownsampleColorImages=true",
                 "-dColorImageResolution=72",  # Lower image resolution
                 "-dNOPAUSE",
@@ -155,10 +155,12 @@ def convert():
                 f"-sOutputFile={output_path}",
                 input_path,
             ]
+            try:
                 subprocess.run(command, check=True)
                 return send_file(output_path, as_attachment=True)
             except Exception as e:
                 return f"❌ Ghostscript compression failed: {str(e)}", 500
+        
 
 
         # ✅ OCR PDF ➡ Text
